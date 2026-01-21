@@ -102,8 +102,27 @@ Motivation (MANDATORY):
 End with a high-energy, confident quote about intelligence and language mastery.
 `;
 
-// Initialize the API client
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+// Helper to safely get the AI client
+// This prevents 'ReferenceError: process is not defined' crashes in browser environments
+// where process is not globally polyfilled until build time or env injection.
+let aiClient: GoogleGenAI | null = null;
+
+const getAiClient = () => {
+  if (aiClient) return aiClient;
+
+  let apiKey = '';
+  try {
+    // Check if process is defined to avoid ReferenceError
+    if (typeof process !== 'undefined' && process.env) {
+      apiKey = process.env.API_KEY || '';
+    }
+  } catch (e) {
+    console.warn("Environment variable access failed", e);
+  }
+
+  aiClient = new GoogleGenAI({ apiKey });
+  return aiClient;
+};
 
 export const sendMessageToGemini = async (
   prompt: string,
@@ -111,6 +130,7 @@ export const sendMessageToGemini = async (
   isFheemMode: boolean = false
 ): Promise<string> => {
   try {
+    const ai = getAiClient();
     const parts: any[] = [];
     
     // Add image if present
