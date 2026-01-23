@@ -177,3 +177,50 @@ export const sendMessageToGemini = async (
     throw new Error("حدث خطأ أثناء الاتصال بالخادم. يرجى المحاولة مرة أخرى.");
   }
 };
+
+export interface PracticeQuestion {
+  question: string;
+  context?: string; // For reading comprehension passages
+  options: string[];
+  correctIndex: number;
+  explanation: string;
+}
+
+export const generatePracticeQuestion = async (topic: string, isFheemMode: boolean): Promise<PracticeQuestion> => {
+  try {
+    const ai = getAiClient();
+    
+    const prompt = `
+      Generate a single, high-quality Saudi Qudrat (General Aptitude Test) verbal question.
+      Topic: ${topic}
+      Difficulty: Hard/Advanced
+      
+      Return ONLY a raw JSON object (no markdown formatting, no backticks) with this exact structure:
+      {
+        "question": "The question text in Arabic",
+        "context": "If reading comprehension, put the passage here. Otherwise leave empty.",
+        "options": ["Option 1", "Option 2", "Option 3", "Option 4"],
+        "correctIndex": 0, // Integer 0-3 indicating the correct option
+        "explanation": "A concise, clear explanation in Arabic why the answer is correct."
+      }
+    `;
+
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-flash-preview', // Faster model for generation
+      contents: prompt,
+      config: {
+        temperature: 0.7,
+        responseMimeType: "application/json"
+      }
+    });
+
+    const text = response.text?.trim() || "{}";
+    // Clean up if the model accidentally included markdown
+    const jsonStr = text.replace(/```json/g, '').replace(/```/g, '').trim();
+    
+    return JSON.parse(jsonStr) as PracticeQuestion;
+  } catch (error) {
+    console.error("Practice Gen Error", error);
+    throw new Error("Failed to generate practice question");
+  }
+};

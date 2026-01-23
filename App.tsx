@@ -4,7 +4,8 @@ import { sendMessageToGemini } from './services/geminiService';
 import MessageBubble from './components/MessageBubble';
 import InputArea from './components/InputArea';
 import SplashScreen from './components/SplashScreen';
-import { Trash2, Scale, FileText, AlertTriangle, MoreHorizontal, Target, Zap, Menu, X, Cpu, Activity, History } from 'lucide-react';
+import PracticeMode from './components/PracticeMode';
+import { Trash2, Scale, FileText, AlertTriangle, MoreHorizontal, Target, Zap, Menu, X, Cpu, Activity, History, MessageSquare, Brain } from 'lucide-react';
 
 // --- Custom Cursor Component ---
 const CustomCursor = () => {
@@ -73,6 +74,91 @@ const ThinkingIndicator = ({ isFheemMode }: { isFheemMode: boolean }) => (
   </div>
 );
 
+// --- Cinematic Fheem Activation Overlay ---
+const FheemActivationOverlay = ({ onComplete }: { onComplete: () => void }) => {
+  const [stage, setStage] = useState<'idle' | 'impact' | 'aftermath'>('idle');
+
+  useEffect(() => {
+    // Sequence Timeline
+    
+    // 1. Start Impact (FHEEM slams down)
+    setTimeout(() => {
+      setStage('impact');
+    }, 500);
+
+    // 2. Aftermath (Reveal Brain)
+    setTimeout(() => {
+      setStage('aftermath');
+    }, 1200);
+
+    // 3. Finish
+    setTimeout(() => {
+      onComplete();
+    }, 4000);
+  }, [onComplete]);
+
+  return (
+    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black overflow-hidden">
+      {/* Background Flash */}
+      <div className={`absolute inset-0 bg-[#39FF14] transition-opacity duration-100 ease-out ${stage === 'impact' ? 'opacity-20' : 'opacity-0'}`}></div>
+      
+      {/* Content Container */}
+      <div className={`relative w-full h-full flex items-center justify-center ${stage === 'impact' ? 'animate-[screenShake_0.5s_linear]' : ''}`}>
+        
+        {/* The Victim: APEX */}
+        <div className="absolute flex items-center justify-center font-['JetBrains_Mono'] font-bold text-6xl md:text-9xl tracking-tighter text-[#525252]">
+          <span 
+            className={`transition-all duration-700 ${stage !== 'idle' ? 'animate-[shatterLeft_0.8s_forwards_ease-in]' : ''}`}
+            style={{ display: 'inline-block' }}
+          >
+            AP
+          </span>
+          <span 
+            className={`transition-all duration-700 ${stage !== 'idle' ? 'animate-[shatterRight_0.8s_forwards_ease-in]' : ''}`}
+            style={{ display: 'inline-block' }}
+          >
+            EX
+          </span>
+        </div>
+
+        {/* The Crusher: FHEEM */}
+        <div 
+          className={`
+            absolute font-['Cairo'] font-black text-7xl md:text-[12rem] text-[#39FF14] tracking-widest drop-shadow-[0_0_50px_rgba(57,255,20,0.8)]
+            ${stage === 'idle' ? 'opacity-0' : 'opacity-100 animate-[wordSlam_0.4s_cubic-bezier(0.25,1,0.5,1)_forwards]'}
+          `}
+          style={{ 
+             textShadow: '0 0 30px #39FF14, 0 0 60px #39FF14'
+          }}
+        >
+          FHEEM
+        </div>
+
+        {/* The Result: SUPER BRAIN */}
+        <div 
+          className={`
+            absolute flex flex-col items-center justify-center gap-6
+            ${stage === 'aftermath' ? 'animate-[brainRise_1s_cubic-bezier(0.175,0.885,0.32,1.275)_forwards]' : 'opacity-0 translate-y-20'}
+          `}
+        >
+           <div className="relative">
+              <div className="absolute inset-0 bg-[#39FF14] blur-[100px] opacity-40 animate-pulse"></div>
+              <Brain className="w-32 h-32 md:w-48 md:h-48 text-[#39FF14] fill-black drop-shadow-[0_0_15px_rgba(57,255,20,1)]" strokeWidth={1.5} />
+              <Zap className="absolute -top-4 -right-4 w-12 h-12 md:w-16 md:h-16 text-white fill-[#39FF14] animate-bounce" />
+           </div>
+           
+           <h2 className="text-2xl md:text-4xl font-bold text-white tracking-[0.5em] font-mono mt-8">
+              SUPER INTELLIGENCE
+           </h2>
+        </div>
+
+      </div>
+    </div>
+  );
+};
+
+type ViewMode = 'chat' | 'practice';
+
 // --- Main App Component ---
 const App: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -80,6 +166,8 @@ const App: React.FC = () => {
   const [isFheemMode, setIsFheemMode] = useState(false);
   const [showSplash, setShowSplash] = useState(true);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<ViewMode>('chat');
+  const [isTransitioning, setIsTransitioning] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Mouse parallax for background
@@ -95,27 +183,51 @@ const App: React.FC = () => {
   }, []);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (viewMode === 'chat') {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
   };
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages, isLoading]);
+  }, [messages, isLoading, viewMode]);
 
   const toggleFheemMode = () => {
-    const newMode = !isFheemMode;
-    setIsFheemMode(newMode);
+    if (isTransitioning) return;
+
+    if (!isFheemMode) {
+      // Activating Fheem Mode
+      setIsTransitioning(true);
+      // Actual logic to switch mode happens after animation in the Overlay callback
+    } else {
+      // Deactivating Fheem Mode (Instant)
+      setIsFheemMode(false);
+      const systemMsg: Message = {
+        id: Date.now().toString(),
+        role: 'model',
+        content: "System restored to Standard Operational Mode.",
+        timestamp: Date.now(),
+      };
+      if (viewMode === 'chat') {
+        setMessages(prev => [...prev, systemMsg]);
+      }
+    }
+  };
+
+  const handleTransitionComplete = () => {
+    setIsFheemMode(true);
+    setIsTransitioning(false);
     
     // Add system notification
     const systemMsg: Message = {
       id: Date.now().toString(),
       role: 'model',
-      content: newMode 
-        ? "⚡ **SYSTEM OVERRIDE: FHEEM MODE ENGAGED.** \n\nPerformance: Maximum. \nLogic: Hyper-Optimized."
-        : "System restored to Standard Operational Mode.",
+      content: "⚡ **SYSTEM OVERRIDE: FHEEM MODE ENGAGED.** \n\nPerformance: Maximum. \nLogic: Hyper-Optimized.",
       timestamp: Date.now(),
     };
-    setMessages(prev => [...prev, systemMsg]);
+    if (viewMode === 'chat') {
+      setMessages(prev => [...prev, systemMsg]);
+    }
   };
 
   const handleSendMessage = async (text: string, image?: string) => {
@@ -174,6 +286,8 @@ const App: React.FC = () => {
     <div className={`relative h-screen w-full overflow-hidden flex transition-colors duration-700 ${isFheemMode ? 'bg-[#000000]' : 'bg-[#050505]'}`}>
       <CustomCursor />
       
+      {isTransitioning && <FheemActivationOverlay onComplete={handleTransitionComplete} />}
+
       {/* --- Ambient Background --- */}
       <div className="absolute inset-0 pointer-events-none z-0">
         <div className="absolute inset-0 opacity-[0.03]" 
@@ -203,9 +317,27 @@ const App: React.FC = () => {
            </button>
         </div>
 
+        {/* Navigation Buttons */}
+        <div className="px-4 pt-6 space-y-2">
+           <button 
+             onClick={() => { setViewMode('chat'); setIsSidebarOpen(false); }}
+             className={`w-full flex items-center gap-3 p-3 rounded-lg text-sm font-medium transition-all interactive ${viewMode === 'chat' ? 'bg-[#ffffff08] text-white border border-[#ffffff10]' : 'text-[#9CA3AF] hover:text-white hover:bg-[#ffffff05]'}`}
+           >
+              <MessageSquare className="w-4 h-4" />
+              Chat Mode
+           </button>
+           <button 
+             onClick={() => { setViewMode('practice'); setIsSidebarOpen(false); }}
+             className={`w-full flex items-center gap-3 p-3 rounded-lg text-sm font-medium transition-all interactive ${viewMode === 'practice' ? 'bg-[#ffffff08] text-white border border-[#ffffff10]' : 'text-[#9CA3AF] hover:text-white hover:bg-[#ffffff05]'}`}
+           >
+              <Brain className="w-4 h-4" />
+              Practice Mode
+           </button>
+        </div>
+
         <div className="flex-1 p-4 space-y-6">
            {/* FHEEM Toggle Card */}
-           <div className={`p-4 rounded-xl border transition-all duration-300 interactive cursor-pointer group relative overflow-hidden ${isFheemMode ? 'bg-[#39FF14]/5 border-[#39FF14]/50 shadow-[0_0_20px_#39FF14/10]' : 'bg-[#111614] border-[#1F2A25] hover:border-[#00FF88]/30'}`} onClick={toggleFheemMode}>
+           <div className={`mt-4 p-4 rounded-xl border transition-all duration-300 interactive cursor-pointer group relative overflow-hidden ${isFheemMode ? 'bg-[#39FF14]/5 border-[#39FF14]/50 shadow-[0_0_20px_#39FF14/10]' : 'bg-[#111614] border-[#1F2A25] hover:border-[#00FF88]/30'}`} onClick={toggleFheemMode}>
               <div className="flex items-center justify-between mb-2">
                  <span className={`text-xs font-bold tracking-widest ${isFheemMode ? 'text-[#39FF14]' : 'text-[#9CA3AF]'}`}>FHEEM CORE</span>
                  <Zap className={`w-4 h-4 ${isFheemMode ? 'text-[#39FF14] fill-current animate-pulse' : 'text-[#9CA3AF]'}`} />
@@ -217,19 +349,6 @@ const App: React.FC = () => {
                  {isFheemMode ? 'Super-Intelligence Active' : 'Click to Activate Super Mode'}
               </p>
            </div>
-
-           {/* Stats / Info */}
-           <div className="space-y-3">
-              <h3 className="text-xs text-[#525252] font-bold uppercase tracking-widest">System Status</h3>
-              <div className="flex items-center justify-between text-xs text-[#9CA3AF] p-2 rounded hover:bg-[#ffffff05] interactive">
-                 <div className="flex items-center gap-2"><Activity className="w-3 h-3" /> Latency</div>
-                 <span className="text-[#00FF88]">24ms</span>
-              </div>
-              <div className="flex items-center justify-between text-xs text-[#9CA3AF] p-2 rounded hover:bg-[#ffffff05] interactive">
-                 <div className="flex items-center gap-2"><History className="w-3 h-3" /> Context</div>
-                 <span>Active</span>
-              </div>
-           </div>
         </div>
 
         <div className="p-4 border-t border-[#ffffff05]">
@@ -240,11 +359,11 @@ const App: React.FC = () => {
         </div>
       </aside>
 
-      {/* --- Main Chat Area --- */}
-      <main className="flex-1 flex flex-col relative z-10">
+      {/* --- Main Content Area --- */}
+      <main className="flex-1 flex flex-col relative z-10 overflow-hidden">
         
         {/* Mobile Header */}
-        <header className="md:hidden flex items-center justify-between p-4 glass-panel z-20 sticky top-0">
+        <header className="md:hidden flex items-center justify-between p-4 glass-panel z-20 sticky top-0 shrink-0">
            <div className="flex items-center gap-2">
               <span className={`w-2 h-2 rounded-full ${isFheemMode ? 'bg-[#39FF14] animate-pulse' : 'bg-[#00FF88]'}`}></span>
               <span className="font-bold tracking-widest">APEX</span>
@@ -254,43 +373,49 @@ const App: React.FC = () => {
            </button>
         </header>
 
-        {/* Messages List */}
-        <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 scroll-smooth">
-           {messages.length === 0 ? (
-              <div className="h-full flex flex-col items-center justify-center text-center space-y-8 animate-in fade-in duration-700">
-                 <div className={`relative w-24 h-24 rounded-full flex items-center justify-center border-2 transition-all duration-500 ${isFheemMode ? 'border-[#39FF14] shadow-[0_0_50px_#39FF14/20]' : 'border-[#00FF88] shadow-[0_0_50px_#00FF88/10]'}`}>
-                    <div className={`absolute inset-0 bg-current opacity-10 rounded-full animate-ping ${isFheemMode ? 'text-[#39FF14]' : 'text-[#00FF88]'}`}></div>
-                    <Cpu className={`w-10 h-10 ${isFheemMode ? 'text-[#39FF14]' : 'text-[#00FF88]'}`} />
-                 </div>
-                 <div>
-                    <h2 className="text-2xl md:text-4xl font-bold tracking-tight mb-2">
-                       {isFheemMode ? <span className="text-[#39FF14] neon-text">FHEEM CORE ONLINE</span> : "SYSTEM READY"}
-                    </h2>
-                    <p className="text-[#9CA3AF] max-w-md mx-auto">
-                       {isFheemMode ? "Advanced verbal reasoning logic engaged. Awaiting complex input." : "Initialize verbal aptitude analysis sequence."}
-                    </p>
-                 </div>
-              </div>
-           ) : (
-             <>
-               {messages.map((msg) => (
-                 <MessageBubble key={msg.id} message={msg} isFheemMode={isFheemMode} />
-               ))}
-               {isLoading && <ThinkingIndicator isFheemMode={isFheemMode} />}
-               <div ref={messagesEndRef} className="h-4" />
-             </>
-           )}
-        </div>
+        {viewMode === 'chat' ? (
+          <>
+            {/* Messages List */}
+            <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 scroll-smooth">
+               {messages.length === 0 ? (
+                  <div className="h-full flex flex-col items-center justify-center text-center space-y-8 animate-in fade-in duration-700">
+                     <div className={`relative w-24 h-24 rounded-full flex items-center justify-center border-2 transition-all duration-500 ${isFheemMode ? 'border-[#39FF14] shadow-[0_0_50px_#39FF14/20]' : 'border-[#00FF88] shadow-[0_0_50px_#00FF88/10]'}`}>
+                        <div className={`absolute inset-0 bg-current opacity-10 rounded-full animate-ping ${isFheemMode ? 'text-[#39FF14]' : 'text-[#00FF88]'}`}></div>
+                        <Cpu className={`w-10 h-10 ${isFheemMode ? 'text-[#39FF14]' : 'text-[#00FF88]'}`} />
+                     </div>
+                     <div>
+                        <h2 className="text-2xl md:text-4xl font-bold tracking-tight mb-2">
+                           {isFheemMode ? <span className="text-[#39FF14] neon-text">FHEEM CORE ONLINE</span> : "SYSTEM READY"}
+                        </h2>
+                        <p className="text-[#9CA3AF] max-w-md mx-auto">
+                           {isFheemMode ? "Advanced verbal reasoning logic engaged. Awaiting complex input." : "Initialize verbal aptitude analysis sequence."}
+                        </p>
+                     </div>
+                  </div>
+               ) : (
+                 <>
+                   {messages.map((msg) => (
+                     <MessageBubble key={msg.id} message={msg} isFheemMode={isFheemMode} />
+                   ))}
+                   {isLoading && <ThinkingIndicator isFheemMode={isFheemMode} />}
+                   <div ref={messagesEndRef} className="h-4" />
+                 </>
+               )}
+            </div>
 
-        {/* Floating Input Area */}
-        <div className="p-4 md:p-6 pb-6 relative z-30">
-           <InputArea 
-             onSend={handleSendMessage} 
-             isLoading={isLoading} 
-             suggestions={messages.length > 0 ? (isFheemMode ? fheemSuggestions : suggestions) : (isFheemMode ? fheemSuggestions : suggestions)} // Always show suggestions if chat empty
-             isFheemMode={isFheemMode}
-           />
-        </div>
+            {/* Floating Input Area */}
+            <div className="p-4 md:p-6 pb-6 relative z-30 shrink-0">
+               <InputArea 
+                 onSend={handleSendMessage} 
+                 isLoading={isLoading} 
+                 suggestions={messages.length > 0 ? (isFheemMode ? fheemSuggestions : suggestions) : (isFheemMode ? fheemSuggestions : suggestions)} // Always show suggestions if chat empty
+                 isFheemMode={isFheemMode}
+               />
+            </div>
+          </>
+        ) : (
+          <PracticeMode isFheemMode={isFheemMode} />
+        )}
       </main>
 
       {/* Overlay for mobile sidebar */}

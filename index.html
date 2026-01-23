@@ -103,6 +103,44 @@
         100% { transform: translateY(100%); }
       }
 
+      /* Fheem Mode Activation Animations */
+      @keyframes wordSlam {
+        0% { transform: scale(10) translateY(-100px); opacity: 0; }
+        60% { transform: scale(1); opacity: 1; }
+        80% { transform: scale(1.1); }
+        100% { transform: scale(1); }
+      }
+
+      @keyframes shatterLeft {
+        0% { transform: translate(0, 0) rotate(0deg); opacity: 1; }
+        100% { transform: translate(-300px, 100px) rotate(-45deg); opacity: 0; }
+      }
+
+      @keyframes shatterRight {
+        0% { transform: translate(0, 0) rotate(0deg); opacity: 1; }
+        100% { transform: translate(300px, 100px) rotate(45deg); opacity: 0; }
+      }
+
+      @keyframes brainRise {
+        0% { transform: translateY(100px) scale(0.5); opacity: 0; filter: blur(10px); }
+        50% { transform: translateY(-20px) scale(1.2); opacity: 1; filter: blur(0); }
+        100% { transform: translateY(0) scale(1); opacity: 1; }
+      }
+
+      @keyframes screenShake {
+        0% { transform: translate(1px, 1px) rotate(0deg); }
+        10% { transform: translate(-1px, -2px) rotate(-1deg); }
+        20% { transform: translate(-3px, 0px) rotate(1deg); }
+        30% { transform: translate(3px, 2px) rotate(0deg); }
+        40% { transform: translate(1px, -1px) rotate(1deg); }
+        50% { transform: translate(-1px, 2px) rotate(-1deg); }
+        60% { transform: translate(-3px, 1px) rotate(0deg); }
+        70% { transform: translate(3px, 1px) rotate(-1deg); }
+        80% { transform: translate(-1px, -1px) rotate(1deg); }
+        90% { transform: translate(1px, 2px) rotate(0deg); }
+        100% { transform: translate(1px, -2px) rotate(-1deg); }
+      }
+
       .glass-panel {
         background: var(--glass-bg);
         backdrop-filter: blur(12px);
@@ -118,13 +156,13 @@
   <script type="importmap">
 {
   "imports": {
-    "react-markdown": "https://esm.sh/react-markdown@9",
+    "react-markdown": "https://esm.sh/react-markdown@9?external=react,react-dom",
     "react/": "https://esm.sh/react@18.3.1/",
     "react": "https://esm.sh/react@18.3.1",
     "react-dom/": "https://esm.sh/react-dom@18.3.1/",
     "react-dom": "https://esm.sh/react-dom@18.3.1",
     "@google/genai": "https://esm.sh/@google/genai",
-    "lucide-react": "https://esm.sh/lucide-react@0.294.0"
+    "lucide-react": "https://esm.sh/lucide-react@0.294.0?external=react,react-dom"
   }
 }
 </script>
